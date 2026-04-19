@@ -84,8 +84,9 @@ function getLabel(el: HTMLElement): string {
     el.getAttribute('data-annotate') ??
     (el.id && !/^:/.test(el.id) ? `#${el.id}` : null) ??
     Array.from(el.classList).find((c) => c.includes('-') || c.includes('_')) ??
-    (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40) ||
+    ((el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40) ||
     el.tagName.toLowerCase()
+    )
   )
 }
 
@@ -318,11 +319,6 @@ export function PinpointOverlay({ children }: PinpointOverlayProps) {
   async function copyPrompt() {
     await navigator.clipboard.writeText(buildBatchPrompt(reviewPayload))
     setCopiedPrompt(true)
-  }
-
-  async function copyJSON() {
-    await navigator.clipboard.writeText(JSON.stringify(reviewPayload, null, 2))
-    setCopied(true)
   }
 
   // ── Render ────────────────────────────────────────────────────────────────

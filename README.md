@@ -1,48 +1,68 @@
-# Frontend Review MCP Demo
+# Pinpoint
 
-This project is a local prototype for visual frontend review inside JetBrains AI Chat:
+Pinpoint is a visual annotation overlay for frontend review.
 
-- the website lets you drop multiple pins on a live page and write comments
-- the browser saves those annotations into `data/review-state.json` through a local API
-- the MCP server exposes that same saved state to Codex or any other MCP-capable agent
+It lets you drag pins onto a live website, attach comments to exact UI regions, save those annotations to disk, and expose the same structured context to an AI coding agent through MCP.
 
-## Run it
+## What it does
 
-Start the file-backed API:
+- wraps a real web page with a reusable `PinpointOverlay`
+- lets you drag and place multiple pins anywhere on the page
+- captures a CSS selector, bounds, text snippet, and comment for each pin
+- saves annotations through a local API into `data/review-state.json`
+- exposes those annotations to agents through an MCP server
+
+## How it works
+
+1. Open the web app and drag a pin onto the page.
+2. Add a comment describing the frontend change you want.
+3. Pinpoint stores the annotation metadata in `data/review-state.json`.
+4. Your AI coding agent reads that same state through MCP tools.
+5. The agent can then edit the matching frontend area with much tighter context.
+
+## Run it locally
+
+Start the API:
 
 ```bash
 npm run dev:api
 ```
 
-In another terminal, start the web app:
+Start the web app:
 
 ```bash
 npm run dev:web
 ```
 
-The Vite dev server proxies `/api` requests to `http://localhost:4545`.
-
-## MCP server
-
-Run the MCP server over stdio:
+Start the MCP server:
 
 ```bash
 npm run mcp
 ```
 
-It exposes these tools:
+The Vite app runs on `http://localhost:5173` and proxies `/api` requests to `http://localhost:4545`.
+
+## MCP tools
+
+The MCP server exposes:
 
 - `get_review_state`
 - `list_annotations`
 - `get_annotation`
 - `get_batch_prompt`
 
-## Shared review file
+## Shared state
 
-The website and MCP server both read from:
+The browser UI and MCP server both use:
 
 ```text
 data/review-state.json
 ```
 
 That file is the source of truth for the current annotation session.
+
+## Using Pinpoint on your own app
+
+The current app includes a demo website, but the overlay is designed to be reusable.
+
+Wrap your app with `PinpointOverlay` from `src/App.tsx`, run the local API, and keep the MCP server connected so your coding agent can consume the saved annotations.
