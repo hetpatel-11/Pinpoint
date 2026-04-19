@@ -157,6 +157,20 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
     res.writeHead(200); res.end(JSON.stringify(state)); return
   }
 
+  // GET /api/health
+  if (req.method === 'GET' && url.pathname === '/api/health') {
+    res.writeHead(200)
+    res.end(
+      JSON.stringify({
+        ok: true,
+        cursorActive: state.cursor !== null,
+        pinCount: state.pins.length,
+        hasGuidanceMessage: state.message !== null,
+      }),
+    )
+    return
+  }
+
   // GET /api/screen — dimensions + cursor position
   if (req.method === 'GET' && url.pathname === '/api/screen') {
     const { width, height } = screen.getPrimaryDisplay().bounds

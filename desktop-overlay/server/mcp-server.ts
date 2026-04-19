@@ -12,12 +12,33 @@ import { z } from 'zod'
 const OVERLAY_API = 'http://127.0.0.1:4546'
 
 async function api(method: string, path: string, body?: unknown) {
-  const res = await fetch(`${OVERLAY_API}${path}`, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  return res.json()
+  let res: Response
+
+  try {
+    res = await fetch(`${OVERLAY_API}${path}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  } catch (error) {
+    throw new Error(
+      `Pinpoint Desktop overlay is not reachable at ${OVERLAY_API}. Start the overlay app with \`cd desktop-overlay && npm run dev\`. Original error: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    )
+  }
+
+  const payload = await res.json()
+
+  if (!res.ok) {
+    throw new Error(
+      typeof payload?.error === 'string'
+        ? payload.error
+        : `Overlay API request failed for ${method} ${path}`,
+    )
+  }
+
+  return payload
 }
 
 const server = new McpServer({
@@ -40,6 +61,23 @@ NEVER use set_guidance instead of actually pointing at something.
 })
 
 // ── Tool: capture_screen — CALL THIS FIRST ───────────────────────────────────
+
+server.tool(
+  'overlay_health',
+  'Check whether the Pinpoint Desktop overlay app is running and ready to receive cursor guidance commands.',
+  {},
+  async () => {
+    const health = await api('GET', '/api/health')
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Overlay ready: ${JSON.stringify(health, null, 2)}`,
+        },
+      ],
+    }
+  },
+)
 
 server.tool(
   'capture_screen',
@@ -76,7 +114,7 @@ Workflow: capture_screen → find element → point_cursor → tell user to clic
   async ({ x, y, reason }) => {
     await api('POST', '/api/cursor', { x, y, reason })
     return {
-      content: [{ type: 'text', text: `Cursor moved to (${x}, ${y}). Label: "${reason}". Tell the user to click there, then call capture_screen to see the result.` }],
+      content: [{ type: 'text', text: `Cursor moved to (${x}, ${y}). Label: "${reason}". The overlay should now show the guide cursor. Tell the user to click there, then call capture_screen to see the result.` }],
     }
   },
 )

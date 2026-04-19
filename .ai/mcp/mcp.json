@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "frontend-review": {
+      "command": "npm",
+      "args": ["run", "mcp"],
+      "cwd": "/Users/hetpatel/Desktop/Plugin-Jetbrains/Plugin-Jetbrains"
+    },
+    "pinpoint-desktop": {
+      "command": "npm",
+      "args": ["run", "mcp"],
+      "cwd": "/Users/hetpatel/Desktop/Plugin-Jetbrains/Plugin-Jetbrains/desktop-overlay"
+    }
+  }
+}
