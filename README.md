@@ -1,26 +1,36 @@
 # Pinpoint
 
-Pinpoint is a visual annotation overlay for frontend review.
+Pinpoint is a visual frontend review system for AI-assisted coding.
 
-It lets you drag pins onto a live website, attach comments to exact UI regions, save those annotations to disk, and expose the same structured context to an AI coding agent through MCP.
+This repo now contains both parts of the project:
 
-## What it does
+- the browser-based annotation app and MCP bridge in the repo root
+- the desktop overlay companion app in `desktop-overlay/`
 
-- wraps a real web page with a reusable `PinpointOverlay`
-- lets you drag and place multiple pins anywhere on the page
-- captures a CSS selector, bounds, text snippet, and comment for each pin
-- saves annotations through a local API into `data/review-state.json`
-- exposes those annotations to agents through an MCP server
+Together, they let you place pins on real UI, capture exact DOM context, save structured review data, and expose that context to an AI coding agent through MCP.
 
-## How it works
+## Repo layout
 
-1. Open the web app and drag a pin onto the page.
-2. Add a comment describing the frontend change you want.
-3. Pinpoint stores the annotation metadata in `data/review-state.json`.
-4. Your AI coding agent reads that same state through MCP tools.
-5. The agent can then edit the matching frontend area with much tighter context.
+```text
+.
+├── src/                  # browser annotation app
+├── server/               # local API + MCP server for the web app
+├── data/                 # saved annotation state
+├── desktop-overlay/      # Electron desktop overlay companion app
+└── README.md
+```
 
-## Run it locally
+## Root app
+
+The root app is the web review flow:
+
+- drag and place multiple pins on a live page
+- attach comments to exact UI regions
+- capture selector, bounds, text snippet, and HTML snippet
+- save annotations into `data/review-state.json`
+- expose those annotations through MCP tools
+
+### Run the root app
 
 Start the API:
 
@@ -42,27 +52,44 @@ npm run mcp
 
 The Vite app runs on `http://localhost:5173` and proxies `/api` requests to `http://localhost:4545`.
 
-## MCP tools
-
-The MCP server exposes:
+### Root MCP tools
 
 - `get_review_state`
 - `list_annotations`
 - `get_annotation`
 - `get_batch_prompt`
 
+## Desktop overlay
+
+The desktop companion app lives in:
+
+```text
+desktop-overlay/
+```
+
+It is an Electron app intended for screen-level annotation and JetBrains-oriented workflows.
+
+### Run the desktop app
+
+```bash
+cd desktop-overlay
+npm install
+npm run dev
+```
+
+### Desktop MCP server
+
+```bash
+cd desktop-overlay
+npm run mcp
+```
+
 ## Shared state
 
-The browser UI and MCP server both use:
+The root browser UI and root MCP server both use:
 
 ```text
 data/review-state.json
 ```
 
-That file is the source of truth for the current annotation session.
-
-## Using Pinpoint on your own app
-
-The current app includes a demo website, but the overlay is designed to be reusable.
-
-Wrap your app with `PinpointOverlay` from `src/App.tsx`, run the local API, and keep the MCP server connected so your coding agent can consume the saved annotations.
+That file is the source of truth for the current browser-based annotation session.

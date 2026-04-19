@@ -1,0 +1,489 @@
+/* Full-screen transparent canvas — nothing here blocks mouse events */
+.overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* default: click-through */
+}
+
+/* ── Guidance pins ─────────────────────────────────────────────────────── */
+
+.guidance-pin {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: translate(-50%, -100%) rotate(-45deg);
+  background: var(--pin-color, #3b82f6);
+  border: 2.5px solid #fff;
+  cursor: pointer;
+  pointer-events: auto; /* interactive */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.35),
+    0 0 0 3px rgba(255, 255, 255, 0.15);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  padding: 0;
+  outline: none;
+  z-index: 80;
+  /* Pulse animation so user notices new pins */
+  animation: pin-drop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pin-drop {
+  from { transform: translate(-50%, -160%) rotate(-45deg) scale(0.6); opacity: 0; }
+  to   { transform: translate(-50%, -100%) rotate(-45deg) scale(1);   opacity: 1; }
+}
+
+.guidance-pin span {
+  transform: rotate(45deg);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.guidance-pin:hover,
+.guidance-pin.active {
+  transform: translate(-50%, -115%) rotate(-45deg);
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.4),
+    0 0 0 4px rgba(255, 255, 255, 0.25);
+  z-index: 90;
+}
+
+/* ── Pin callout bubble ────────────────────────────────────────────────── */
+
+.pin-callout {
+  position: fixed;
+  z-index: 100;
+  width: 280px;
+  background: rgba(10, 10, 12, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  pointer-events: auto;
+  /* Default: appear to the right and below the pin */
+  transform: translate(20px, -10px);
+  animation: callout-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes callout-in {
+  from { opacity: 0; transform: translate(20px, 0px) scale(0.92); }
+  to   { opacity: 1; transform: translate(20px, -10px) scale(1); }
+}
+
+.pin-callout.from-right {
+  transform: translate(calc(-100% - 20px), -10px);
+}
+.pin-callout.from-right.from-bottom,
+.pin-callout.from-bottom {
+  transform: translate(20px, calc(-100% - 20px));
+}
+.pin-callout.from-right.from-bottom {
+  transform: translate(calc(-100% - 20px), calc(-100% - 20px));
+}
+
+.callout-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.callout-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.callout-step {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.03em;
+}
+
+.callout-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+}
+.callout-close:hover { color: rgba(255, 255, 255, 0.7); }
+
+.callout-message {
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.88);
+  margin-bottom: 12px;
+}
+
+.callout-actions {
+  display: flex;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.callout-btn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: opacity 120ms;
+}
+.callout-btn:hover { opacity: 0.85; }
+
+.callout-btn.ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.callout-btn.primary {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.callout-btn.done {
+  background: #22c55e;
+  color: #fff;
+}
+
+/* ── Agent cursor — visible flying pointer ─────────────────────────────── */
+
+.agent-cursor {
+  position: fixed;
+  z-index: 999;
+  pointer-events: none;
+  /* tip of the arrow is the hotspot */
+  transform: translate(0, 0);
+  filter: drop-shadow(0 2px 8px rgba(59,130,246,0.8));
+  animation: cursor-arrive 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes cursor-arrive {
+  from { transform: translate(-40px, 60px) scale(0.5); opacity: 0; }
+  to   { transform: translate(0, 0)       scale(1);   opacity: 1; }
+}
+
+.agent-cursor svg {
+  width: 36px;
+  height: 36px;
+}
+
+.agent-cursor-ring {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid #3b82f6;
+  top: 4px;
+  left: 4px;
+  animation: cursor-pulse 1s ease-out infinite;
+}
+
+@keyframes cursor-pulse {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Cursor label ──────────────────────────────────────────────────────── */
+.cursor-label {
+  position: fixed;
+  z-index: 998;
+  pointer-events: none;
+  transform: translate(38px, -4px);
+  background: rgba(9, 9, 11, 0.92);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(59,130,246,0.4);
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cursor-label.from-right { transform: translate(calc(-100% - 16px), -4px); }
+
+/* ── Confirm card ──────────────────────────────────────────────────────── */
+
+.confirm-card {
+  position: fixed;
+  z-index: 100;
+  width: 260px;
+  background: rgba(9, 9, 11, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  transform: translate(20px, -10px);
+  animation: callout-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.confirm-card.from-right  { transform: translate(calc(-100% - 20px), -10px); }
+.confirm-card.from-bottom { transform: translate(20px, calc(-100% - 20px)); }
+.confirm-card.from-right.from-bottom { transform: translate(calc(-100% - 20px), calc(-100% - 20px)); }
+
+.confirm-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #3b82f6;
+  margin-bottom: 6px;
+}
+
+.confirm-reason {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.confirm-coords {
+  font-family: 'SF Mono', 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-bottom: 12px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirm-btn {
+  flex: 1;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: opacity 100ms;
+}
+.confirm-btn:hover { opacity: 0.85; }
+
+.confirm-btn.deny {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.confirm-btn.allow {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* ── Coordinate tooltip ────────────────────────────────────────────────── */
+
+.coord-tooltip {
+  position: fixed;
+  z-index: 110;
+  pointer-events: none;
+  background: rgba(10, 10, 12, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coord-tooltip span {
+  font-family: 'SF Mono', 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #fff;
+}
+
+.coord-hint {
+  font-size: 10px !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-family: inherit !important;
+}
+
+/* ════════════════════════════════════════════
+   FLOATING CURVED STATUS BAR — same design
+   as Pinpoint web overlay
+   ════════════════════════════════════════════ */
+
+.status-bar {
+  position: fixed;
+  bottom: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(680px, calc(100vw - 24px));
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(9, 9, 11, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 2px 20px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  z-index: 120;
+  pointer-events: auto; /* always interactive */
+  transition: opacity 300ms;
+}
+
+.status-bar.idle {
+  opacity: 0.55;
+}
+.status-bar:hover {
+  opacity: 1 !important;
+}
+
+/* Brand */
+.status-brand {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.status-logo {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.1px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 300ms, box-shadow 300ms;
+}
+.status-dot.active {
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.7);
+}
+
+/* Separator */
+.status-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+/* Guidance message */
+.status-center {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.status-message {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.status-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  white-space: nowrap;
+}
+
+/* Pin chips */
+.status-pins {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.status-chip {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 120ms, color 120ms;
+}
+.status-chip:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.status-chip.active { color: #fff; }
+
+/* Actions */
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.status-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 120ms;
+  border: none;
+}
+
+.status-btn.ghost {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.6);
+}
+.status-btn.ghost:hover { background: rgba(255, 255, 255, 0.13); color: #fff; }
+
+.status-btn.coord-active {
+  background: #f59e0b;
+  color: #000;
+}
+.status-btn.coord-active:hover { background: #d97706; }
